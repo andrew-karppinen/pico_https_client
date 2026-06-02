@@ -219,6 +219,8 @@ void HttpClient::send_https_request(const char* method,const char* path,const ch
     request_fail_ = false;
     buffer_index_ = 0;
     buffer_[0] = '\0';
+    response_buffer_[0] = '\0';
+
 
     mbedtls_x509_crt cert;
 
@@ -361,6 +363,7 @@ err_t HttpClient::tls_recv_cb(void* arg, struct altcp_pcb* apcb, struct pbuf* p,
         altcp_tls_free_config(client->tls_config_);
 
         altcp_close(apcb);
+        client->handle_response();
         client->ready_ = true;
         return ERR_OK;
     }
@@ -368,9 +371,9 @@ err_t HttpClient::tls_recv_cb(void* arg, struct altcp_pcb* apcb, struct pbuf* p,
     altcp_recved(apcb, p->len);
 
     if (p->len + client->buffer_index_ < RECV_BUF_SIZE) {
-        memcpy(client->buffer_ + client->buffer_index_, p->payload, p->len);
+        memcpy(client->response_buffer_ + client->buffer_index_, p->payload, p->len);
         client->buffer_index_ += p->len;
-        client->buffer_[client->buffer_index_] = '\0';
+        client->response_buffer_[client->buffer_index_] = '\0';
     } else {
         client->request_fail_ = true;
     }
@@ -379,6 +382,35 @@ err_t HttpClient::tls_recv_cb(void* arg, struct altcp_pcb* apcb, struct pbuf* p,
     return ERR_OK;
 }
 
+void HttpClient::handle_response()
+{
+    char *body = strstr(response_buffer_, "\r\n\r\n");
+
+    if (body) {
+        body += 4;
+
+        char *json_start = strchr(body, '{');
+        char *json_end   = strrchr(body, '}');
+
+        if (!json_start || !json_end || json_end <= json_start) { //can't find json, copy full message
+            memcpy(buffer_,body,strlen(body));
+            buffer_[strlen(body)] = '\0';
+            return;
+        }
+
+        size_t json_len = json_end - json_start + 1;
+
+        if (json_len >= RECV_BUF_SIZE) {
+            request_fail_ = true;
+            return;
+        }
+
+        memcpy(buffer_, json_start, json_len);
+        buffer_[json_len] = '\0';
+    }else{
+        request_fail_ = true;
+    }
+}
 
 
 void HttpClient::keepAlive()

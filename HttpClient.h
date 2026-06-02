@@ -79,6 +79,9 @@ private:
     bool ready_;
     char request_body_[MAX_REQUEST_BODY_LEN];
 
+    char response_buffer_[RECV_BUF_SIZE];
+    void handle_response();
+
     bool ca_cert_initialized_;
     u8_t ca_cert_[MAX_CERTIFICATE_LEN];
     size_t cert_length_;
