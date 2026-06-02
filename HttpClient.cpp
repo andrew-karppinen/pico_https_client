@@ -78,6 +78,9 @@ HttpClient::HttpClient() //constructor
     content_type_[0] = '\0';
     ca_cert_initialized_ = false;
 
+    data_cb_ = nullptr;
+    done_cb_ = nullptr;
+    cb_arg_ = nullptr;
 
     for (int i = 0; i < MAX_HEADERS; i++) {
         request_headers_[i].key[0] = '\0';
@@ -499,3 +502,11 @@ void HttpClient::abort_request()
 
 }
 
+
+void HttpClient::set_data_callback(data_callback_t cb, void* arg) {
+    data_cb_ = cb;
+    cb_arg_ = arg;
+}
+void HttpClient::set_done_callback(done_callback_t cb) {
+    done_cb_ = cb;
+}
