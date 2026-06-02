@@ -91,8 +91,6 @@ private:
     char buffer_[RECV_BUF_SIZE];
     int buffer_index_;
 
-    char response_buffer_[RECV_BUF_SIZE];
-    void handle_response();
     ip_addr_t server_ip_address;
     const char* server_host_name_;
     bool wifi_status;
