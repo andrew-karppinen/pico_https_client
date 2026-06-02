@@ -346,34 +346,6 @@ err_t HttpClient::callback_altcp_connect(void* arg,struct altcp_pcb* pcb,err_t e
 }
 
 
-err_t HttpClient::callback_altcp_connect_get(void* arg,struct altcp_pcb* pcb,err_t err) //https
-{
-    if (err != ERR_OK) {
-        return err;
-    }
-
-    HttpClient* client = static_cast<HttpClient*>(arg);
-
-    char request[256];
-    snprintf(request, sizeof(request),
-             "GET %s HTTP/1.1\r\n"
-             "Host: %s\r\n"
-             "Connection: close\r\n"
-             "\r\n",
-             client->request_path_,
-             client->get_server_host_name());
-
-    // Lähetä request PCB:lle
-    err_t lwip_err = altcp_write(pcb, request, strlen(request), 0);
-    if (lwip_err == ERR_OK) {
-        altcp_output(pcb); //tyhjennä lähetyspuskuri
-    } else {
-        client->request_fail_ = true;
-        client->ready_ = true;
-    }
-    return ERR_OK;
-}
-
 void HttpClient::callback_altcp_err(void* arg, err_t err) //https
 {
     HttpClient* client = static_cast<HttpClient*>(arg);
@@ -408,77 +380,6 @@ err_t HttpClient::tls_recv_cb(void* arg, struct altcp_pcb* apcb, struct pbuf* p,
 }
 
 
-err_t HttpClient::tcp_connected_cb(void *arg, struct tcp_pcb *tpcb, err_t err)
-{
-    HttpClient* client = static_cast<HttpClient*>(arg);
-
-    if (err != ERR_OK) {
-        return err;
-    }
-
-    char request[256];
-    snprintf(request, sizeof(request),
-             "GET %s HTTP/1.1\r\n"
-             "Host: %s\r\n"
-             "Connection: close\r\n"
-             "\r\n",
-             client->request_path_,
-             client->get_server_host_name());
-
-    tcp_write(tpcb, request, strlen(request), TCP_WRITE_FLAG_COPY);
-    tcp_output(tpcb);
-
-    tcp_recv(tpcb, tcp_recv_cb);
-    return ERR_OK;
-}
-
-
-err_t HttpClient::tcp_recv_cb(void *arg, struct tcp_pcb *tpcb,struct pbuf *p, err_t err) {
-    HttpClient* client = static_cast<HttpClient*>(arg);
-     if (!p) {
-        tcp_close(tpcb);
-        client->ready_ =true;
-        return ERR_OK;
-    }
-    tcp_recved(tpcb, p->len);
-    pbuf_free(p);
-
-    //write payload to buffer
-    if (p->len+client->buffer_index_ < RECV_BUF_SIZE) {
-        memcpy(client->buffer_ + client->buffer_index_, p->payload, p->len);
-        client->buffer_index_ += p->len;
-        client->buffer_[client->buffer_index_] = '\0'; // Null-terminate the buffer
-    } else {
-        client->request_fail_ = true;
-    }
-
-    return ERR_OK;
-}
-
-
-void HttpClient::send_http_get_request(const char* path) {
-
-    if (!get_connection_status()){
-        request_fail_ = true; ready_ = true; return; //request fail!!
-    }
-
-    size_t len = strlen(path);
-    if (len >= PATH_MAX)
-        len = PATH_MAX - 1;
-
-    memcpy(request_path_, path, len);
-    request_path_[len] = '\0';
-
-    ready_ = false; //init request status variables
-    request_fail_ = false;
-    buffer_index_ = 0;
-    buffer_[0] = '\0';
-
-    struct tcp_pcb* pcb = tcp_new();
-    tcp_arg(pcb, this);
-
-    tcp_connect(pcb, &server_ip_address, LWIP_IANA_PORT_HTTP, tcp_connected_cb);
-}
 
 void HttpClient::keepAlive()
 {
