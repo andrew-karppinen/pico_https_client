@@ -76,6 +76,8 @@ HttpClient::HttpClient() //constructor
     request_method_[0] = '\0';
     request_body_[0] = '\0';
     content_type_[0] = '\0';
+    ca_cert_[0] = '\0';
+    cert_length_ = 0;
     ca_cert_initialized_ = false;
 
     data_cb_ = nullptr;
@@ -111,17 +113,16 @@ void HttpClient::connect_to_server(const char* server_address)
     dns_gethostbyname(server_host_name_, &test, dns_cb, (void*)this);
 }
 
-void HttpClient::set_ca_cert(const char* cert, size_t length) { //https
-    if(length < MAX_CERTIFICATE_LEN) {
-        memcpy(ca_cert_, cert, length);
-        cert_length_ = length;
+void HttpClient::set_ca_cert(const char* cert, size_t length) {
+    if (cert_length_ + length < MAX_CERTIFICATE_LEN) {
+        memcpy(ca_cert_ + cert_length_, cert, length);
+        cert_length_ += length;
         ca_cert_initialized_ = true;
         return;
     }
     ca_cert_initialized_ = false;
     printf("failed to set CA certificate\n");
 }
-
 
 void HttpClient::sini(struct altcp_pcb* pcb)
 {
@@ -361,21 +362,28 @@ err_t HttpClient::tls_recv_cb(void* arg, struct altcp_pcb* apcb, struct pbuf* p,
 
     if (!p) {
         altcp_tls_free_config(client->tls_config_);
-
         altcp_close(apcb);
-        client->handle_response();
+        if (client->done_cb_) {
+            client->done_cb_(client->cb_arg_);
+        } else {
+            client->handle_response();
+        }
         client->ready_ = true;
         return ERR_OK;
     }
 
     altcp_recved(apcb, p->len);
 
-    if (p->len + client->buffer_index_ < RECV_BUF_SIZE) {
-        memcpy(client->response_buffer_ + client->buffer_index_, p->payload, p->len);
-        client->buffer_index_ += p->len;
-        client->response_buffer_[client->buffer_index_] = '\0';
+    if (client->data_cb_) {
+        client->data_cb_((const uint8_t*)p->payload, p->len, client->cb_arg_);
     } else {
-        client->request_fail_ = true;
+        if (p->len + client->buffer_index_ < RECV_BUF_SIZE) {
+            memcpy(client->response_buffer_ + client->buffer_index_, p->payload, p->len);
+            client->buffer_index_ += p->len;
+            client->response_buffer_[client->buffer_index_] = '\0';
+        } else {
+            client->request_fail_ = true;
+        }
     }
 
     pbuf_free(p);
