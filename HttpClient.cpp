@@ -359,7 +359,6 @@ void HttpClient::callback_altcp_err(void* arg, err_t err) //https
 
 err_t HttpClient::tls_recv_cb(void* arg, struct altcp_pcb* apcb, struct pbuf* p, err_t err) { //https
     HttpClient* client = static_cast<HttpClient*>(arg);
-
     if (!p) {
         altcp_tls_free_config(client->tls_config_);
         altcp_close(apcb);
@@ -372,9 +371,9 @@ err_t HttpClient::tls_recv_cb(void* arg, struct altcp_pcb* apcb, struct pbuf* p,
         return ERR_OK;
     }
 
-    altcp_recved(apcb, p->len);
+    altcp_recved(apcb, p->tot_len);
 
-    if (client->data_cb_) {
+    if (client->data_cb_) { //use calbacks
         client->data_cb_((const uint8_t*)p->payload, p->len, client->cb_arg_);
     } else {
         if (p->len + client->buffer_index_ < RECV_BUF_SIZE) {
@@ -383,6 +382,7 @@ err_t HttpClient::tls_recv_cb(void* arg, struct altcp_pcb* apcb, struct pbuf* p,
             client->response_buffer_[client->buffer_index_] = '\0';
         } else {
             client->request_fail_ = true;
+            client->ready_ = true;
         }
     }
 

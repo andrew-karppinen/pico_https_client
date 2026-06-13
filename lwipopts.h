@@ -236,9 +236,8 @@
 #define LWIP_DEBUG                  1
 
 // Enable ALTCP-compatible TLS port debugging
-//#define ALTCP_MBEDTLS_DEBUG         LWIP_DBG_ON
 
 // Enable Mbed TLS debugging
-#define ALTCP_MBEDTLS_LIB_DEBUG     LWIP_DBG_ON
+//#define ALTCP_MBEDTLS_LIB_DEBUG     LWIP_DBG_ON
 
 #endif //_LWIPOPTS_EXAMPLE_COMMONH_H

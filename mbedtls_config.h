@@ -14,9 +14,11 @@
 
 /* Misc **********************************************************************/
 
+#ifndef MBEDTLS_CONFIG_H
+#define MBEDTLS_CONFIG_H
+
 // Workaround for some Mbed TLS source files using INT_MAX without including limits.h
 #include <limits.h>
-
 
 
 /* System ********************************************************************/
@@ -157,3 +159,5 @@
 #define MBEDTLS_MPI_MAX_SIZE 512
 
 /* Module config *************************************************************/
+
+#endif
