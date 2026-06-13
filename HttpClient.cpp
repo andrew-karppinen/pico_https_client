@@ -88,7 +88,6 @@ HttpClient::HttpClient() //constructor
         request_headers_[i].key[0] = '\0';
         request_headers_[i].value[0] = '\0';
     }
-
 }
 
 void HttpClient::dns_cb(const char *name, const ip_addr_t *ipaddr, void *arg)
@@ -104,14 +103,25 @@ void HttpClient::dns_cb(const char *name, const ip_addr_t *ipaddr, void *arg)
     client->ready_ = true;
 }
 
-
 void HttpClient::connect_to_server(const char* server_address)
 {
     server_host_name_ = server_address;
 
-    ip_addr_t test;
-    dns_gethostbyname(server_host_name_, &test, dns_cb, (void*)this);
+    ip_addr_t resolved;
+    err_t err = dns_gethostbyname(server_host_name_, &resolved, dns_cb, (void*)this);
+
+    if (err == ERR_OK) {
+        set_connection_status(true);
+        set_server_ip_address(resolved);
+        ready_ = true;
+    } else if (err != ERR_INPROGRESS) {
+        // muu virhe
+        set_connection_status(false);
+        ready_ = true;
+    }
 }
+
+
 
 void HttpClient::set_ca_cert(const char* cert, size_t length) {
     if (cert_length_ + length < MAX_CERTIFICATE_LEN) {
