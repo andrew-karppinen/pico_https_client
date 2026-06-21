@@ -1,6 +1,7 @@
-//
-// Created by ak on 13.3.2026.
-//
+
+/*
+ Some certificates for example
+ */
 
 #ifndef HTTP_LIBRARY_CERTIFICATE_H
 #define HTTP_LIBRARY_CERTIFICATE_H
