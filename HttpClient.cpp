@@ -20,7 +20,6 @@
 #include "certificate.h"
 #include <time.h>
 
-#include "pico/aon_timer.h"
 #include "pico/util/datetime.h"
 #include "mbedtls/debug.h"
 
