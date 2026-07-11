@@ -65,10 +65,14 @@ public:
     void set_data_callback(data_callback_t cb, void* arg);
     void set_done_callback(done_callback_t cb);
 
+    void set_https_port(uint16_t port) { https_port_ = port; }
+    void set_http_port(uint16_t port) { http_port_ = port; }
 private:
     char request_method_[MAX_REQUEST_METHOD_LEN];
     char request_path_[PATH_MAX];
     char content_type_[MAX_CONTEN_TYPE_LEN];
+    uint16_t https_port_ = LWIP_IANA_PORT_HTTPS; //default 443
+    uint16_t http_port_ = LWIP_IANA_PORT_HTTP;   //default 80
 
     HttpHeader request_headers_[MAX_HEADERS];
     size_t request_header_count_;

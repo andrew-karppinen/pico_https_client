@@ -71,6 +71,8 @@ HttpClient::HttpClient() //constructor
     tls_config_ = nullptr;
     wifi_initialized_ = false;
 
+    response_buffer_[0] = '\0';
+    buffer_[0] = '\0';
     request_path_[0] = '\0';
     request_method_[0] = '\0';
     request_body_[0] = '\0';
@@ -289,7 +291,7 @@ void HttpClient::send_https_request(const char* method,const char* path,const ch
 
     // Initiate TLS connection
     cyw43_arch_lwip_begin();
-    err_t err = altcp_connect(pcb_, &server_ip_address, LWIP_IANA_PORT_HTTPS, callback_altcp_connect);
+    err_t err = altcp_connect(pcb_, &server_ip_address, https_port_, callback_altcp_connect);
     cyw43_arch_lwip_end();
 
     if (err != ERR_OK) {
@@ -346,10 +348,10 @@ err_t HttpClient::callback_altcp_connect(void* arg,struct altcp_pcb* pcb,err_t e
         offset += snprintf(request + offset, sizeof(request) - offset,"%s",client->request_body_);
     }
 
-    // Lähetä request PCB:lle
+    //send request to pcb
     err_t lwip_err = altcp_write(pcb, request, strlen(request), 0);
     if (lwip_err == ERR_OK) {
-        altcp_output(pcb); //tyhjennä lähetyspuskuri
+        altcp_output(pcb); //clear pcb send buffer
     } else {
         client->request_fail_ = true;
         client->ready_ = true;

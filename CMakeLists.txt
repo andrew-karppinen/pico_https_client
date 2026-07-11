@@ -16,10 +16,7 @@ add_compile_options(-Wall
 add_library(http_library STATIC
         HttpClient.cpp
         HttpClient.h
-        FirmwareUpdater.cpp
-        FirmwareUpdater.h
-        flash_functions.h
-        flash_functions.c
+
 )
 
 target_include_directories(http_library PUBLIC
