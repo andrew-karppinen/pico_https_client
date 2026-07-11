@@ -44,7 +44,7 @@ public:
     void connect_to_server(const char* server_address);
 
     void send_https_request(const char* method,const char* path,const char* body = nullptr,const char* content_type = nullptr,const HttpHeader* headers = nullptr,size_t header_count = 0);
-    void send_http_get_request(const char* path); //Todo implement http features
+    void send_http_request(const char* path); //Todo implement http features
 
     void keepAlive(); //if you use freertos, don't use this
     void set_connection_status(bool status){server_connect_status = status;}
@@ -96,8 +96,8 @@ private:
     static err_t tcp_recv_cb(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err);  //Todo implement http features
 
     static err_t tls_recv_cb(void* arg, struct altcp_pcb* apcb, struct pbuf* p, err_t err);
-    static void callback_altcp_err(void* arg, err_t err);
-    static err_t callback_altcp_connect(void* arg,struct altcp_pcb* pcb,err_t err);
+    static void handle_altcp_err(void* arg, err_t err);
+    static err_t handle_altcp_connect(void* arg,struct altcp_pcb* pcb,err_t err);
     struct altcp_pcb* pcb_;
 
     void sini(struct altcp_pcb* pcb);
@@ -105,8 +105,8 @@ private:
     char buffer_[RECV_BUF_SIZE];
     int buffer_index_;
 
-    data_callback_t data_cb_ = nullptr;
-    done_callback_t done_cb_ = nullptr;
+    data_callback_t callback_data_cb_ = nullptr;
+    done_callback_t callback_done_cb_ = nullptr;
     void* cb_arg_ = nullptr;
 
     ip_addr_t server_ip_address;

@@ -81,8 +81,8 @@ HttpClient::HttpClient() //constructor
     cert_length_ = 0;
     ca_cert_initialized_ = false;
 
-    data_cb_ = nullptr;
-    done_cb_ = nullptr;
+    callback_data_cb_ = nullptr;
+    callback_done_cb_ = nullptr;
     cb_arg_ = nullptr;
 
     for (int i = 0; i < MAX_HEADERS; i++) {
@@ -282,16 +282,16 @@ void HttpClient::send_https_request(const char* method,const char* path,const ch
 
     cyw43_arch_lwip_end();
 
-    // Set callbacks
+
     cyw43_arch_lwip_begin();
     altcp_recv(pcb_, tls_recv_cb);
 
-    altcp_err(pcb_, callback_altcp_err); // Optionally handle errors
+    altcp_err(pcb_, handle_altcp_err); // Optionally handle errors
     cyw43_arch_lwip_end();
 
     // Initiate TLS connection
     cyw43_arch_lwip_begin();
-    err_t err = altcp_connect(pcb_, &server_ip_address, https_port_, callback_altcp_connect);
+    err_t err = altcp_connect(pcb_, &server_ip_address, https_port_, handle_altcp_connect);
     cyw43_arch_lwip_end();
 
     if (err != ERR_OK) {
@@ -304,7 +304,7 @@ void HttpClient::send_https_request(const char* method,const char* path,const ch
 }
 
 
-err_t HttpClient::callback_altcp_connect(void* arg,struct altcp_pcb* pcb,err_t err)
+err_t HttpClient::handle_altcp_connect(void* arg,struct altcp_pcb* pcb,err_t err)
 {
     if (err != ERR_OK) {
         return err;
@@ -360,7 +360,7 @@ err_t HttpClient::callback_altcp_connect(void* arg,struct altcp_pcb* pcb,err_t e
 }
 
 
-void HttpClient::callback_altcp_err(void* arg, err_t err) //https
+void HttpClient::handle_altcp_err(void* arg, err_t err) //https
 {
     HttpClient* client = static_cast<HttpClient*>(arg);
     client->request_fail_ = true;
@@ -373,8 +373,8 @@ err_t HttpClient::tls_recv_cb(void* arg, struct altcp_pcb* apcb, struct pbuf* p,
     if (!p) {
         altcp_tls_free_config(client->tls_config_);
         altcp_close(apcb);
-        if (client->done_cb_) {
-            client->done_cb_(client->cb_arg_);
+        if (client->callback_done_cb_) {
+            client->callback_done_cb_(client->cb_arg_);
         } else {
             client->handle_response();
         }
@@ -384,8 +384,8 @@ err_t HttpClient::tls_recv_cb(void* arg, struct altcp_pcb* apcb, struct pbuf* p,
 
     altcp_recved(apcb, p->tot_len);
 
-    if (client->data_cb_) { //use calbacks
-        client->data_cb_((const uint8_t*)p->payload, p->len, client->cb_arg_);
+    if (client->callback_data_cb_) { //use calbacks
+        client->callback_data_cb_((const uint8_t*)p->payload, p->len, client->cb_arg_);
     } else {
         if (p->len + client->buffer_index_ < RECV_BUF_SIZE) {
             memcpy(client->response_buffer_ + client->buffer_index_, p->payload, p->len);
@@ -454,11 +454,10 @@ void HttpClient::abort_request()
 
 }
 
-
 void HttpClient::set_data_callback(data_callback_t cb, void* arg) {
-    data_cb_ = cb;
+    callback_data_cb_ = cb;
     cb_arg_ = arg;
 }
 void HttpClient::set_done_callback(done_callback_t cb) {
-    done_cb_ = cb;
+    callback_done_cb_ = cb;
 }
