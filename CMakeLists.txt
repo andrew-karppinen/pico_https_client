@@ -16,6 +16,8 @@ add_compile_options(-Wall
 add_library(http_library STATIC
         HttpClient.cpp
         HttpClient.h
+        wifi_helper.cpp
+        wifi_helper.h
 
 )
 

@@ -1,6 +1,4 @@
-//
-// Created by ak on 12.2.2026.
-//
+
 
 #ifndef BLINK_HTTPCLIENT_H
 #define BLINK_HTTPCLIENT_H
@@ -11,7 +9,6 @@
 #define MAX_CERTIFICATE_LEN 5024
 #define MAX_REQUEST_METHOD_LEN 50
 #define PATH_MAX 256
-#define WIFI_TIMEOUT 5000
 
 #define MAX_CONTEN_TYPE_LEN 50
 #define  MAX_REQUEST_BODY_LEN 100
@@ -22,10 +19,6 @@ static const size_t MAX_HEADER_VALUE_LEN = 256;
 #include "lwip/ip_addr.h"
 #include "lwip/err.h"
 
-
-bool connect_wifi_helper(const char* wifi_ssid, const char* wifi_password);
-void disconnect_wifi_helper();
-bool wifi_connected_helper();
 
 typedef void (*data_callback_t)(const uint8_t* data, size_t len, void* arg);
 typedef void (*done_callback_t)(void* arg);
