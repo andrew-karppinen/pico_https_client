@@ -401,6 +401,213 @@ err_t HttpClient::tls_recv_cb(void* arg, struct altcp_pcb* apcb, struct pbuf* p,
     return ERR_OK;
 }
 
+
+//HTTP
+
+err_t HttpClient::handle_tcp_connected_cb(void *arg, struct tcp_pcb *tpcb, err_t err)
+{
+    HttpClient* client = static_cast<HttpClient*>(arg);
+
+    if (err != ERR_OK) {
+        return err;
+    }
+
+    int offset = 0;
+    char request[250];
+
+    offset += snprintf(request + offset, sizeof(request) - offset,
+        "%s %s HTTP/1.1\r\n"
+        "Host: %s\r\n",
+        client->request_method_,
+        client->request_path_,
+        client->get_server_host_name());
+
+    if (client->content_type_[0] != '\0') {
+        offset += snprintf(request + offset, sizeof(request) - offset,
+            "Content-Type: %s\r\n",
+            client->content_type_);
+    }
+
+    size_t body_len = strlen(client->request_body_);
+
+    offset += snprintf(request + offset, sizeof(request) - offset,"Content-Length: %zu\r\n", body_len);
+
+    // custom headers
+    for (size_t i = 0; i < client->request_header_count_; i++) {
+        offset += snprintf(request + offset, sizeof(request) - offset,
+            "%s: %s\r\n",
+            client->request_headers_[i].key,
+            client->request_headers_[i].value);
+    }
+
+    offset += snprintf(request + offset, sizeof(request) - offset,
+        "Connection: close\r\n"
+        "\r\n");
+
+    // body
+    if (body_len > 0) {
+        offset += snprintf(request + offset, sizeof(request) - offset,"%s",client->request_body_);
+    }
+
+    err_t lwip_err = tcp_write(tpcb, request, strlen(request), TCP_WRITE_FLAG_COPY);
+    tcp_output(tpcb);
+
+    tcp_recv(tpcb, handle_tcp_recv_cb);
+    if (lwip_err != ERR_OK) {
+        client->request_fail_ = true;
+        client->ready_ = true;
+    }
+    return lwip_err;
+}
+
+
+err_t HttpClient::handle_tcp_recv_cb(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err) {
+    HttpClient* client = static_cast<HttpClient*>(arg);
+    if (!p) {
+        tcp_close(tpcb);
+        if (client->callback_done_cb_) {
+            client->callback_done_cb_(client->cb_arg_);
+        } else {
+            client->handle_response();
+        }
+        client->ready_ = true;
+        return ERR_OK;
+    }
+
+    tcp_recved(tpcb, p->tot_len);
+
+    if (client->callback_data_cb_) { //use callbacks
+        client->callback_data_cb_((const uint8_t*)p->payload, p->len, client->cb_arg_);
+    } else {
+        if (p->len + client->buffer_index_ < RECV_BUF_SIZE) {
+            memcpy(client->response_buffer_ + client->buffer_index_, p->payload, p->len);
+            client->buffer_index_ += p->len;
+            client->response_buffer_[client->buffer_index_] = '\0';
+        } else {
+            client->request_fail_ = true;
+        }
+    }
+
+    pbuf_free(p);
+    return ERR_OK;
+}
+
+void HttpClient::handle_tcp_err_cb(void* arg, err_t err)
+{
+    HttpClient* client = static_cast<HttpClient*>(arg);
+    client->request_fail_ = true;
+    client->ready_ = true;
+    printf("tcp connection error: %d\n", err);
+}
+
+void HttpClient::send_http_request(const char* method,const char* path,const char* body,const char* content_type,const HttpHeader* headers,size_t header_count) {
+
+    if (!get_connection_status()){
+        request_fail_ = true; ready_ = true; return; //request fail!
+    }
+
+    //copy path
+    size_t len =0;
+    if (path){
+        len =  strlen(path);
+        if (len >= PATH_MAX)
+            len = PATH_MAX - 1;
+        memcpy(request_path_, path, len);
+    }
+    request_path_[len] = '\0';
+
+    //copy method
+    len = 0;
+    if (method){
+        len = strlen(method) ;
+        if (len>= MAX_REQUEST_METHOD_LEN)
+            len = MAX_REQUEST_METHOD_LEN - 1;
+        memcpy(request_method_, method, len);
+    }
+    request_method_[len] = '\0';
+
+    //copy body
+    len = 0;
+    if (body){
+        len = strlen(body);
+        if (len >= MAX_REQUEST_BODY_LEN)
+            len = MAX_REQUEST_BODY_LEN - 1;
+        memcpy(request_body_,body,len);
+    }
+    request_body_[len] = '\0';
+
+    //Copy content type
+    len = 0;
+    if (content_type){
+        len = strlen(content_type);
+        if (len >= MAX_CONTEN_TYPE_LEN)
+            len = MAX_CONTEN_TYPE_LEN - 1;
+        memcpy(content_type_,content_type,len);
+    }
+    content_type_[len] = '\0';
+
+
+    // COPY HEADERS
+    request_header_count_ = 0;
+
+    if (headers && header_count!=0)
+    {
+        for (size_t i = 0; i < header_count && i < MAX_HEADERS; i++) {
+
+            size_t klen = strlen(headers[i].key);
+            if (klen >= MAX_HEADER_KEY_LEN)
+                klen = MAX_HEADER_KEY_LEN - 1;
+            memcpy(request_headers_[i].key, headers[i].key, klen);
+            request_headers_[i].key[klen] = '\0';
+
+            size_t vlen = strlen(headers[i].value);
+            if (vlen >= MAX_HEADER_VALUE_LEN)
+                vlen = MAX_HEADER_VALUE_LEN - 1;
+
+            memcpy(request_headers_[i].value, headers[i].value, vlen);
+            request_headers_[i].value[vlen] = '\0';
+
+            request_header_count_++;
+        }
+    }
+
+    ready_ = false; //init request status variables
+    request_fail_ = false;
+    buffer_index_ = 0;
+    buffer_[0] = '\0';
+    buffer_[0] = '\0';
+    response_buffer_[0] = '\0';
+
+
+    cyw43_arch_lwip_begin();
+    struct tcp_pcb* pcb = tcp_new();
+    cyw43_arch_lwip_end();
+
+    if (!pcb) {
+        request_fail_ = true;
+        ready_ = true;
+        printf("tcp_new failed\n");
+        return;
+    }
+
+    cyw43_arch_lwip_begin();
+    tcp_arg(pcb, this);
+    tcp_err(pcb, handle_tcp_err_cb);
+    err_t err = tcp_connect(pcb, &server_ip_address, http_port_, handle_tcp_connected_cb);
+    cyw43_arch_lwip_end();
+
+    if (err != ERR_OK) {
+        cyw43_arch_lwip_begin();
+        tcp_abort(pcb);
+        cyw43_arch_lwip_end();
+
+        request_fail_ = true;
+        ready_ = true;
+        printf("tcp_connect failed: %d\n", err);
+    }
+}
+
+
 void HttpClient::handle_response()
 {
     char *body = strstr(response_buffer_, "\r\n\r\n");
