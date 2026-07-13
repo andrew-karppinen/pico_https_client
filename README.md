@@ -103,13 +103,27 @@ int main() {
     while (!client.is_ready()) {
         client.keep_alive(); //needed for lwIP poll architecture
     }
-
+    
+    if (!client.get_connection_status()){ //check connection status
+        return 1;
+    }
+    
     client.send_http_request("GET", path, nullptr, nullptr,nullptr,0);
 
 
     while (!client.is_ready()) {
         client.keep_alive(); 
     }
+    
+    //Check whether the request failed:
+    if (client.request_fail()) {
+      return 1;
+    }
+
+    
+    //get response:
+    printf("%s", client.get_buffer());
+    
 
     return 0;
 }
@@ -128,8 +142,36 @@ strcpy(rheaders[0].value, "value");
 
 client.send_http_request("POST", path, nullptr, nullptr,rheaders,1);
 
-
 ```
+
+--- 
+
+### Callbacks
+
+By default, received data is stored in an internal buffer and parsed automatically.
+
+You can override this by registering callbacks. This is useful for streaming large
+responses (for example firmware updates) without buffering the entire response.
+
+`set_data_callback()` is called for each received data chunk:
+
+```cpp
+client.set_data_callback([](const uint8_t* data, size_t len, void* arg) {
+    static_cast<FirmwareUpdater*>(arg)->feed(data, len);
+}, &updater);
+```
+
+`set_done_callback()` is called once when the response is complete:
+
+```cpp
+client.set_done_callback([](void* arg) {
+    static_cast<FirmwareUpdater*>(arg)->finalize();
+});
+```
+
+> **Note:** If callbacks are registered, `get_buffer()` will be empty.
+> If no callbacks are registered, the response is available via `get_buffer()`
+> after `is_ready()` returns `true`.
 
 ---
 
