@@ -1,0 +1,129 @@
+# Minimum CMake version
+cmake_minimum_required(VERSION 3.12)
+
+# Board (Pico W / Pico 2 W)
+set(PICO_BOARD pico2_w)
+
+# Pico SDK
+include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
+# Project
+project(blink C CXX ASM)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+
+include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
+
+pico_sdk_init()
+
+# Compiler warnings
+add_compile_options(
+        -Wall
+        -Wno-format
+        -Wno-unused-function
+        -Wno-maybe-uninitialized
+)
+
+# Subdirectories
+add_subdirectory(http_library)
+
+# Executable
+add_executable(${PROJECT_NAME}
+        main.cpp
+)
+
+# Include paths
+target_include_directories(${PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+# Compile definitions
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+        MBEDTLS_CONFIG_FILE="mbedtls_config.h"
+)
+
+# Libraries
+target_link_libraries(${PROJECT_NAME}
+        pico_stdlib
+        hardware_adc
+        hardware_pwm
+        hardware_gpio
+        pico_aon_timer
+        pico_mbedtls
+        pico_lwip_mbedtls
+
+        http_library
+)
+
+# Output formats
+pico_add_extra_outputs(${PROJECT_NAME})
+
+# UART / USB stdio
+pico_enable_stdio_usb(${PROJECT_NAME} 0)
+pico_enable_stdio_uart(${PROJECT_NAME} 1)# Minimum CMake version
+cmake_minimum_required(VERSION 3.12)
+
+# Board (Pico W / Pico 2 W)
+set(PICO_BOARD pico2_w)
+
+# Pico SDK
+include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
+# Project
+project(blink C CXX ASM)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+
+include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
+
+pico_sdk_init()
+
+# Compiler warnings
+add_compile_options(
+        -Wall
+        -Wno-format
+        -Wno-unused-function
+        -Wno-maybe-uninitialized
+)
+
+# Subdirectories
+add_subdirectory(http_library)
+
+# Executable
+add_executable(${PROJECT_NAME}
+        main.cpp
+)
+
+# Include paths
+target_include_directories(${PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+# Compile definitions
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+        MBEDTLS_CONFIG_FILE="mbedtls_config.h"
+)
+
+# Libraries
+target_link_libraries(${PROJECT_NAME}
+        pico_stdlib
+        hardware_adc
+        hardware_pwm
+        hardware_gpio
+        hardware_flash
+
+        pico_cyw43_arch_lwip_poll
+        pico_aon_timer
+
+        pico_mbedtls
+        pico_lwip_mbedtls
+
+        http_library
+)
+
+# Output formats
+pico_add_extra_outputs(${PROJECT_NAME})
+
+# UART / USB stdio
+pico_enable_stdio_usb(${PROJECT_NAME} 0)
+pico_enable_stdio_uart(${PROJECT_NAME} 1)

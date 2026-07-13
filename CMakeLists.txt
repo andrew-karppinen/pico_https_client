@@ -29,8 +29,11 @@ target_include_directories(http_library PUBLIC
 target_link_libraries(http_library
         pico_stdlib
         pico_util
-        pico_cyw43_arch_lwip_poll
-        hardware_gpio
         pico_lwip_mbedtls
         pico_mbedtls
+
+        #SELECT ONE CYW43 architecture:
+        pico_cyw43_arch_lwip_poll
+        #pico_cyw43_arch_lwip_sys_freertos
+        #(other CYW43 architectures may also work)
 )
