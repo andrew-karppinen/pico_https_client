@@ -4,6 +4,8 @@
 #define BLINK_HTTPCLIENT_H
 
 #include <cstddef>
+#include "lwip/prot/iana.h"         // HTTPS port number
+
 
 #define RECV_BUF_SIZE 7048
 #define MAX_CERTIFICATE_LEN 5024

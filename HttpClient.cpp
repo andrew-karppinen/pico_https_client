@@ -9,7 +9,9 @@
 #include "lwip/dns.h"               // Hostname resolution
 #include "lwip/altcp_tls.h"         // TCP + TLS (+ HTTP == HTTPS)
 #include "altcp_tls_mbedtls_structs.h"
-#include "lwip/prot/iana.h"         // HTTPS port number
+
+
+
 
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
@@ -17,8 +19,6 @@
 #include "lwip/tcp.h"
 #include "lwip/dns.h"
 #include  "HttpClient.h"
-#include "certificate.h"
-#include <time.h>
 
 #include "pico/util/datetime.h"
 #include "mbedtls/debug.h"
