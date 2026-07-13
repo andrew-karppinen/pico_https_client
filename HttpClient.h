@@ -39,7 +39,7 @@ public:
     void connect_to_server(const char* server_address);
 
     void send_https_request(const char* method,const char* path,const char* body = nullptr,const char* content_type = nullptr,const HttpHeader* headers = nullptr,size_t header_count = 0);
-    void send_http_request(const char* method,const char* path,const char* body = nullptr,const char* content_type = nullptr,const HttpHeader* headers = nullptr,size_t header_count = 0); //Todo implement http features
+    void send_http_request(const char* method,const char* path,const char* body = nullptr,const char* content_type = nullptr,const HttpHeader* headers = nullptr,size_t header_count = 0);
 
     void keepAlive(); //if you use freertos, don't use this
     void set_connection_status(bool status){server_connect_status = status;}
