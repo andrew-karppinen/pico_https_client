@@ -1,15 +1,16 @@
 # c++ HTTP Library for Raspberry Pi Pico W / Pico 2 W
 
-Simple c++ HTTP/HTTPS client library for Raspberry Pi Pico W / Pico 2 W using Pico SDK + lwIP (+ mbedTLS for HTTPS).
+C++ HTTP/HTTPS client library for Raspberry Pi Pico W / Pico 2 W using Pico SDK + lwIP (+ mbedTLS for HTTPS).
 
 ## Features
 
-- Custom request headers
 - HTTP and HTTPS support
+- Works with both polling and FreeRTOS-based Pico SDK architectures
+- Custom request headers
 - Lightweight API for embedded projects
 
----
 
+---
 ## Requirements
 
 - Raspberry Pi Pico SDK
@@ -19,65 +20,25 @@ Simple c++ HTTP/HTTPS client library for Raspberry Pi Pico W / Pico 2 W using Pi
 
 ---
 
-## Project structure
+## Library contents
 
-- `http_library/HttpClient.h` / `http_library/HttpClient.cpp`  
+- `http_library/HttpClient.h` / `http_library/HttpClient.cpp`
   Main client implementation
-- `http_library/wifi_helper.h` / `http_library/wifi_helper.cpp`  
+- `http_library/wifi_helper.h` / `http_library/wifi_helper.cpp`
   Wi-Fi helper functions
-- `lwipopts.h` (project root)
-- `mbedtls_config.h` (project root)
+- `http_library/CMakeLists.txt`
+  CMake configuration for integrating the library
 
 ---
 
-## Top-level CMake example
+## Required files in your application
 
-Your main project should include Pico SDK, add this library as subdirectory, and define mbedTLS config:
+The application using this library must provide:
 
-```cmake
-cmake_minimum_required(VERSION 3.12)
-set(PICO_BOARD pico2_w)
-
-include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
-project(my_app C CXX ASM)
-
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
-
-# Make lwipopts.h visible for lwIP build
-include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
-
-pico_sdk_init()
-
-add_subdirectory(http_library)
-
-add_executable(${PROJECT_NAME}
-    main.cpp
-)
-
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-    MBEDTLS_CONFIG_FILE="mbedtls_config.h"
-)
-
-target_link_libraries(${PROJECT_NAME}
-    pico_stdlib
-    pico_mbedtls
-    pico_lwip_mbedtls
-    http_library
-)
-
-pico_add_extra_outputs(${PROJECT_NAME})
-```
-
+- `lwipopts.h`
+- `mbedtls_config.h` 
 ---
 
-## `http_library/CMakeLists.txt` (library)
-
-The library links Pico/lwIP/mbedTLS dependencies, including CYW43 arch (poll variant in this example).
-
-
-
----
 
 ## Quick start example
 
@@ -128,6 +89,50 @@ int main() {
     return 0;
 }
 ```
+---
+## Top-level CMake example
+
+Your main project should include Pico SDK, add this library as subdirectory, and define mbedTLS config:
+
+```cmake
+cmake_minimum_required(VERSION 3.12)
+set(PICO_BOARD pico2_w)
+
+include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
+project(my_app C CXX ASM)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+
+# Make lwipopts.h visible for lwIP build
+include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
+
+pico_sdk_init()
+
+add_subdirectory(http_library)
+
+add_executable(${PROJECT_NAME}
+    main.cpp
+)
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    MBEDTLS_CONFIG_FILE="mbedtls_config.h"
+)
+
+target_link_libraries(${PROJECT_NAME}
+    pico_stdlib
+    pico_mbedtls
+    pico_lwip_mbedtls
+    http_library
+)
+
+pico_add_extra_outputs(${PROJECT_NAME})
+```
+
+---
+
+
+
 ## send_http_request() and send_https_request() share the same function prototype:
 > void send_https_request(const char* method,const char* path,const char* body = nullptr,const char* content_type = nullptr,const HttpHeader* headers = nullptr,size_t header_count = 0);
 
