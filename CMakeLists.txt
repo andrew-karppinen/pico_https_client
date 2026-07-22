@@ -1,6 +1,6 @@
 # Set minimum required version of CMake
 cmake_minimum_required(VERSION 3.12)
-
+option(HTTP_LIBRARY_USE_FREERTOS "Use FreeRTOS networking" OFF)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(CMAKE_C_STANDARD 11)
@@ -31,9 +31,17 @@ target_link_libraries(http_library
         pico_util
         pico_lwip_mbedtls
         pico_mbedtls
-
-        #SELECT ONE CYW43 architecture:
-        pico_cyw43_arch_lwip_poll
-        #pico_cyw43_arch_lwip_sys_freertos
-        #(other CYW43 architectures may also work)
 )
+
+#SELECT ONE CYW43 architecture:
+if(HTTP_LIBRARY_USE_FREERTOS)
+    target_link_libraries(http_library
+            pico_cyw43_arch_lwip_sys_freertos
+            FreeRTOS-Kernel
+            FreeRTOS-Kernel-Heap4
+    )
+else()
+    target_link_libraries(http_library
+            pico_cyw43_arch_lwip_poll
+    )
+endif()

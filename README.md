@@ -73,7 +73,7 @@ int main() {
 
 
     while (!client.is_ready()) {
-        client.keep_alive(); 
+        client.keep_alive();   //needed for lwIP poll architecture
     }
     
     //Check whether the request failed:
@@ -108,6 +108,8 @@ set(CMAKE_CXX_STANDARD 17)
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 
 pico_sdk_init()
+
+set(HTTP_LIBRARY_USE_FREERTOS OFF) #Use polling architecture (set ON for FreeRTOS)
 
 add_subdirectory(http_library)
 
@@ -204,13 +206,14 @@ p/SgguMh1YQdc4acLa/KNJvxn7kjNuK8YAOdgLOaVsjh4rsUecrNIdSUtUlD\n\
 
 - `lwipopts.h` must be available in include path (current setup expects it at project root).
 - `mbedtls_config.h` is selected via:
-    - `target_compile_definitions(... MBEDTLS_CONFIG_FILE="mbedtls_config.h")`
+- `target_compile_definitions(... MBEDTLS_CONFIG_FILE="mbedtls_config.h")`
+- By default, the library uses the lwIP polling architecture (`pico_cyw43_arch_lwip_poll`).
+  To use the FreeRTOS networking architecture instead, set:
+  ```cmake
+  set(HTTP_LIBRARY_USE_FREERTOS ON)
+  ```
+  before calling `add_subdirectory(http_library)`.
 
-- If you are not using the polling architecture, edit the library's `CMakeLists.txt` and replace:
-    - `pico_cyw43_arch_lwip_poll`
-      with
-    - `pico_cyw43_arch_lwip_sys_freertos`
-    
 ---
 
 ## License
