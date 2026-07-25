@@ -51,8 +51,8 @@ public:
     bool request_succeeded() const { return !request_fail_; }
     void abort_request();
 
-    const char* get_buffer(){return buffer_;}
-    void clear_buffer(){buffer_[0] = '\0';}
+    const char* get_buffer(){return response_buffer_;}
+    void clear_buffer(){response_buffer_[0] = '\0';}
     bool ready()const{return ready_;}
     void set_ca_cert(const char* cert, size_t length);
 
@@ -99,7 +99,6 @@ private:
 
     void sini(struct altcp_pcb* pcb);
 
-    char buffer_[RECV_BUF_SIZE];
     int buffer_index_;
 
     data_callback_t callback_data_cb_ = nullptr;

@@ -29,7 +29,6 @@ HttpClient::HttpClient() //constructor
     wifi_initialized_ = false;
 
     response_buffer_[0] = '\0';
-    buffer_[0] = '\0';
     request_path_[0] = '\0';
     request_method_[0] = '\0';
     request_body_[0] = '\0';
@@ -117,7 +116,6 @@ void HttpClient::send_https_request(const char* method,const char* path,const ch
     ready_ = false; //init variables
     request_fail_ = false;
     buffer_index_ = 0;
-    buffer_[0] = '\0';
     response_buffer_[0] = '\0';
 
     if (!is_connected()) {
@@ -455,8 +453,7 @@ void HttpClient::send_http_request(const char* method,const char* path,const cha
     ready_ = false; //init request variables
     request_fail_ = false;
     buffer_index_ = 0;
-    buffer_[0] = '\0';
-    buffer_[0] = '\0';
+
     response_buffer_[0] = '\0';
 
     //copy path
@@ -562,22 +559,22 @@ void HttpClient::handle_response()
         char *json_start = strchr(body, '{');
         char *json_end   = strrchr(body, '}');
 
-        if (!json_start || !json_end || json_end <= json_start) { //can't find json, copy full message
-            memcpy(buffer_,body,strlen(body));
-            buffer_[strlen(body)] = '\0';
-            return;
-        }
-
-        size_t json_len = json_end - json_start + 1;
-
-        if (json_len >= RECV_BUF_SIZE) {
+        size_t body_len = strlen(body);
+        if (body_len >= RECV_BUF_SIZE) {
             request_fail_ = true;
             return;
         }
 
-        memcpy(buffer_, json_start, json_len);
-        buffer_[json_len] = '\0';
-    }else{
+        if (!json_start || !json_end || json_end <= json_start) { //can't find json, copy full message
+            memmove(response_buffer_, body, body_len);
+            response_buffer_[body_len] = '\0';
+            return;
+        }
+
+        size_t json_len = json_end - json_start + 1;
+        memmove(response_buffer_, json_start, json_len);
+        response_buffer_[json_len] = '\0';
+    } else {
         request_fail_ = true;
     }
 }

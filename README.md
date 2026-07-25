@@ -219,6 +219,7 @@ p/SgguMh1YQdc4acLa/KNJvxn7kjNuK8YAOdgLOaVsjh4rsUecrNIdSUtUlD\n\
   set(HTTP_LIBRARY_USE_FREERTOS ON)
   ```
   before calling `add_subdirectory(http_library)`.
+- The maximum response buffer size is controlled by `RECV_BUF_SIZE`, which defaults to `7048` bytes.
 
 ---
 
