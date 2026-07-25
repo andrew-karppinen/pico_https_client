@@ -45,11 +45,17 @@ The application using this library must provide:
 ```cpp
 #include "HttpClient.h"
 #include "wifi_helper.h"
+#include "pico/cyw43_arch.h"
 
 
 
 int main() {
     stdio_init_all();
+
+    if (cyw43_arch_init()) {
+        printf("WiFi init failed\n");
+        return false;
+    }
 
     if (!connect_wifi_helper("YOUR_WIFI_SSID", "YOUR_WIFI_PASSWORD", 15000)) {
         printf("Wi-Fi connect failed\n");
