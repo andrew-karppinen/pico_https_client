@@ -1,17 +1,10 @@
 
-//
-// Created by ak on 12.2.2026.
-//
-
 #include <stdio.h>
 #include <string.h>
 
 #include "lwip/dns.h"               // Hostname resolution
 #include "lwip/altcp_tls.h"         // TCP + TLS (+ HTTP == HTTPS)
 #include "altcp_tls_mbedtls_structs.h"
-
-
-
 
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
@@ -22,7 +15,6 @@
 
 #include "pico/util/datetime.h"
 #include "mbedtls/debug.h"
-
 
 
 HttpClient::HttpClient() //constructor
@@ -122,7 +114,13 @@ void HttpClient::send_https_request(const char* method,const char* path,const ch
         return;
     }
 
-    if (!get_connection_status()) {
+    ready_ = false; //init variables
+    request_fail_ = false;
+    buffer_index_ = 0;
+    buffer_[0] = '\0';
+    response_buffer_[0] = '\0';
+
+    if (!is_connected()) {
         request_fail_ = true;
         ready_ = true;
         return; // Request fail!!
@@ -192,25 +190,8 @@ void HttpClient::send_https_request(const char* method,const char* path,const ch
         }
     }
 
-    ready_ = false;
-    request_fail_ = false;
-    buffer_index_ = 0;
-    buffer_[0] = '\0';
-    response_buffer_[0] = '\0';
-
-
     mbedtls_x509_crt cert;
-
     mbedtls_x509_crt_init(&cert);
-
-    int ret = mbedtls_x509_crt_parse(
-        &cert,
-        (const unsigned char*)ca_cert_,
-        cert_length_
-    );
-
-    printf("parse ret = %d\n", ret);
-
 
     // --- TLS PCB ---
     pcb_ = nullptr;
@@ -467,9 +448,16 @@ void HttpClient::handle_tcp_err_cb(void* arg, err_t err)
 
 void HttpClient::send_http_request(const char* method,const char* path,const char* body,const char* content_type,const HttpHeader* headers,size_t header_count) {
 
-    if (!get_connection_status()){
+    if (!is_connected()){
         request_fail_ = true; ready_ = true; return; //request fail!
     }
+
+    ready_ = false; //init request variables
+    request_fail_ = false;
+    buffer_index_ = 0;
+    buffer_[0] = '\0';
+    buffer_[0] = '\0';
+    response_buffer_[0] = '\0';
 
     //copy path
     size_t len =0;
@@ -511,7 +499,6 @@ void HttpClient::send_http_request(const char* method,const char* path,const cha
     }
     content_type_[len] = '\0';
 
-
     // COPY HEADERS
     request_header_count_ = 0;
 
@@ -535,14 +522,6 @@ void HttpClient::send_http_request(const char* method,const char* path,const cha
             request_header_count_++;
         }
     }
-
-    ready_ = false; //init request status variables
-    request_fail_ = false;
-    buffer_index_ = 0;
-    buffer_[0] = '\0';
-    buffer_[0] = '\0';
-    response_buffer_[0] = '\0';
-
 
     cyw43_arch_lwip_begin();
     struct tcp_pcb* pcb = tcp_new();
@@ -604,7 +583,7 @@ void HttpClient::handle_response()
 }
 
 
-void HttpClient::keepAlive()
+void HttpClient::keep_alive()
 {
     cyw43_arch_poll();
 }
@@ -622,8 +601,6 @@ void HttpClient::abort_request()
 
     request_fail_ = true;
     ready_ = true;
-    printf("request_aborted\n");
-
 }
 
 void HttpClient::set_data_callback(data_callback_t cb, void* arg) {

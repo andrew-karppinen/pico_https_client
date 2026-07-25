@@ -41,19 +41,19 @@ public:
     void send_https_request(const char* method,const char* path,const char* body = nullptr,const char* content_type = nullptr,const HttpHeader* headers = nullptr,size_t header_count = 0);
     void send_http_request(const char* method,const char* path,const char* body = nullptr,const char* content_type = nullptr,const HttpHeader* headers = nullptr,size_t header_count = 0);
 
-    void keepAlive(); //if you use freertos, don't use this
+    void keep_alive(); //Only needed in poll mode (pico_cyw43_arch_lwip_poll)
     void set_connection_status(bool status){server_connect_status = status;}
     void set_server_ip_address(ip_addr_t ip_address){(server_ip_address = ip_address);}
     ip_addr_t get_server_ip_address(){return server_ip_address;}
     const char* get_server_host_name(){return server_host_name_;}
 
-    bool get_connection_status(){return server_connect_status;}
+    bool is_connected() const { return server_connect_status; }
+    bool request_succeeded() const { return !request_fail_; }
     void abort_request();
 
     const char* get_buffer(){return buffer_;}
     void clear_buffer(){buffer_[0] = '\0';}
     bool ready()const{return ready_;}
-    bool request_fail()const{return request_fail_;}
     void set_ca_cert(const char* cert, size_t length);
 
     //set calbacks
@@ -74,7 +74,6 @@ private:
 
     bool wifi_initialized_;
     struct altcp_tls_config* tls_config_;
-    err_t error_code;
     bool ready_;
     char request_body_[MAX_REQUEST_BODY_LEN];
 
@@ -111,7 +110,7 @@ private:
     const char* server_host_name_;
     bool wifi_status;
 
-    bool server_connect_status; //dns or any other step fail
+    bool server_connect_status; //false if dns or any other step fail
 };
 
 #endif //BLINK_HTTPCLIENT_H

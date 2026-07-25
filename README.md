@@ -61,23 +61,23 @@ int main() {
     const char* path = "/";
     
     client.connect_to_server("server_ip_or_domain");
-    while (!client.is_ready()) {
+    while (!client.ready()) {
         client.keep_alive(); //needed for lwIP poll architecture
     }
     
-    if (!client.get_connection_status()){ //check connection status
+    if (!client.is_connected()){ //check connection status
         return 1;
     }
     
     client.send_http_request("GET", path, nullptr, nullptr,nullptr,0);
 
 
-    while (!client.is_ready()) {
+    while (!client.ready()) {
         client.keep_alive();   //needed for lwIP poll architecture
     }
     
     //Check whether the request failed:
-    if (client.request_fail()) {
+    if (!client.request_succeeded()) {
       return 1;
     }
 
@@ -178,7 +178,7 @@ client.set_done_callback([](void* arg) {
 
 > **Note:** If callbacks are registered, `get_buffer()` will be empty.
 > If no callbacks are registered, the response is available via `get_buffer()`
-> after `is_ready()` returns `true`.
+> after `ready()` returns `true`.
 
 ---
 
