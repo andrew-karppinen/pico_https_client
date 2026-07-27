@@ -54,7 +54,7 @@ int main() {
 
     if (cyw43_arch_init()) {
         printf("WiFi init failed\n");
-        return false;
+        return 1;
     }
 
     if (!connect_wifi_helper("YOUR_WIFI_SSID", "YOUR_WIFI_PASSWORD", 15000)) {
@@ -214,9 +214,9 @@ p/SgguMh1YQdc4acLa/KNJvxn7kjNuK8YAOdgLOaVsjh4rsUecrNIdSUtUlD\n\
 - `mbedtls_config.h` is selected via:
 - `target_compile_definitions(... MBEDTLS_CONFIG_FILE="mbedtls_config.h")`
 - By default, the library uses the lwIP polling architecture (`pico_cyw43_arch_lwip_poll`).
-  To use the FreeRTOS networking architecture instead, set:
+- You can set this in your top-level CMakeLists.txt:
   ```cmake
-  set(HTTP_LIBRARY_USE_FREERTOS ON)
+  set(HTTP_LIBRARY_USE_FREERTOS ON) #(ON/OFF)
   ```
   before calling `add_subdirectory(http_library)`.
 - The maximum response buffer size is controlled by `RECV_BUF_SIZE`, which defaults to `7048` bytes.

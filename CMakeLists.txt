@@ -1,6 +1,5 @@
 # Set minimum required version of CMake
 cmake_minimum_required(VERSION 3.12)
-option(HTTP_LIBRARY_USE_FREERTOS "Use FreeRTOS networking" OFF)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(CMAKE_C_STANDARD 11)
