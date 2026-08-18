@@ -211,7 +211,10 @@ void HttpClient::send_https_request(const char* method,const char* path,const ch
     pcb_ = altcp_tls_new(tls_config_, IPADDR_TYPE_V4);
     cyw43_arch_lwip_end();
     if (!pcb_) {
-        altcp_tls_free_config(tls_config_);
+        if (tls_config_) { //free tls config
+            altcp_tls_free_config(tls_config_);
+            tls_config_ = nullptr;
+        }
         printf("tls PCB creation failed\n");
         request_fail_ = true;
         ready_ = true;
@@ -239,7 +242,10 @@ void HttpClient::send_https_request(const char* method,const char* path,const ch
     cyw43_arch_lwip_end();
 
     if (err != ERR_OK) {
-        altcp_tls_free_config(tls_config_);
+        if (tls_config_) { //free tls config
+            altcp_tls_free_config(tls_config_);
+            tls_config_ = nullptr;
+        }
         printf("altcp_connect failed with error code: %d\n", err);
         altcp_close(pcb_);
         request_fail_ = true;
@@ -307,6 +313,10 @@ err_t HttpClient::handle_altcp_connect(void* arg,struct altcp_pcb* pcb,err_t err
 void HttpClient::handle_altcp_err(void* arg, err_t err) //https
 {
     HttpClient* client = static_cast<HttpClient*>(arg);
+    if (client->tls_config_) { //free tls config
+        altcp_tls_free_config(client->tls_config_);
+        client->tls_config_ = nullptr;
+    }
     client->request_fail_ = true;
     client->ready_ = true;
     printf("tls connection error: %d\n", err);
@@ -315,7 +325,10 @@ void HttpClient::handle_altcp_err(void* arg, err_t err) //https
 err_t HttpClient::tls_recv_cb(void* arg, struct altcp_pcb* apcb, struct pbuf* p, err_t err) { //https
     HttpClient* client = static_cast<HttpClient*>(arg);
     if (!p) {
-        altcp_tls_free_config(client->tls_config_);
+        if (client->tls_config_) { //free tls config
+            altcp_tls_free_config(client->tls_config_);
+            client->tls_config_ = nullptr;
+        }
         altcp_close(apcb);
         if (client->callback_done_cb_) {
             client->callback_done_cb_(client->cb_arg_);
