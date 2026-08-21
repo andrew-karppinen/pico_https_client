@@ -262,7 +262,7 @@ err_t HttpClient::handle_altcp_connect(void* arg,struct altcp_pcb* pcb,err_t err
     HttpClient* client = static_cast<HttpClient*>(arg);
 
     int offset = 0;
-    char request[250];
+    char request[MAX_REQUEST_LEN];
 
     offset += snprintf(request + offset, sizeof(request) - offset,
         "%s %s HTTP/1.1\r\n"
@@ -370,7 +370,7 @@ err_t HttpClient::handle_tcp_connected_cb(void *arg, struct tcp_pcb *tpcb, err_t
     }
 
     int offset = 0;
-    char request[250];
+    char request[MAX_REQUEST_LEN];
 
     offset += snprintf(request + offset, sizeof(request) - offset,
         "%s %s HTTP/1.1\r\n"
