@@ -60,6 +60,7 @@ public:
     //set calbacks
     void set_data_callback(data_callback_t cb, void* arg);
     void set_done_callback(done_callback_t cb);
+    void clear_callbacks();
 
     void set_https_port(uint16_t port) { https_port_ = port; }
     void set_http_port(uint16_t port) { http_port_ = port; }

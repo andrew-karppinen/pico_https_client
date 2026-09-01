@@ -620,3 +620,9 @@ void HttpClient::set_data_callback(data_callback_t cb, void* arg) {
 void HttpClient::set_done_callback(done_callback_t cb) {
     callback_done_cb_ = cb;
 }
+
+void  HttpClient::clear_callbacks() {
+    callback_data_cb_ = nullptr;
+    callback_done_cb_ = nullptr;
+    cb_arg_ = nullptr;
+}
