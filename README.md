@@ -210,21 +210,36 @@ p/SgguMh1YQdc4acLa/KNJvxn7kjNuK8YAOdgLOaVsjh4rsUecrNIdSUtUlD\n\
 
 ## Notes
 
-- `lwipopts.h` must be available in include path (current setup expects it at project root).
-- `mbedtls_config.h` is selected via:
-- `target_compile_definitions(... MBEDTLS_CONFIG_FILE="mbedtls_config.h")`
-- By default, the library uses the lwIP polling architecture (`pico_cyw43_arch_lwip_poll`).
-- You can set this in your top-level CMakeLists.txt:
+* `lwipopts.h` must be available in the include path. The current setup expects it at the project root.
+* `mbedtls_config.h` is selected via:
+
+  ```cmake
+  target_compile_definitions(... MBEDTLS_CONFIG_FILE="mbedtls_config.h")
+  ```
+* By default, the library uses the lwIP polling architecture (`pico_cyw43_arch_lwip_poll`).
+* To use the FreeRTOS architecture, set the following in your top-level `CMakeLists.txt` **before** calling `add_subdirectory(http_library)`:
+
   ```cmake
   set(HTTP_LIBRARY_USE_FREERTOS ON) #(ON/OFF)
   ```
-  before calling `add_subdirectory(http_library)`.
-- The maximum response buffer size is controlled by `RECV_BUF_SIZE`, which defaults to `7048` bytes.
 
----
+  Set it to `OFF` to use the default polling architecture.
 
-## License
+### Configuration defines
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+The following configuration defines are defined in HttpClient.h:
+
+```cpp
+#define RECV_BUF_SIZE             
+#define MAX_CERTIFICATE_LEN       
+#define MAX_REQUEST_METHOD_LEN    
+#define PATH_MAX                  
+
+#define MAX_REQUEST_LEN           
+#define MAX_CONTEN_TYPE_LEN       
+#define MAX_REQUEST_BODY_LEN      
+
+#define MAX_HEADERS               
+```
 
 This project depends on third-party libraries (such as Pico SDK, lwIP, and mbedTLS), which are distributed under their own licenses.
