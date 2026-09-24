@@ -26,7 +26,6 @@ HttpClient::HttpClient() //constructor
     request_fail_ = false;
     request_fail_ = false;
     tls_config_ = nullptr;
-    wifi_initialized_ = false;
 
     response_buffer_[0] = '\0';
     request_path_[0] = '\0';
@@ -319,6 +318,7 @@ void HttpClient::handle_altcp_err(void* arg, err_t err) //https
     }
     client->request_fail_ = true;
     client->ready_ = true;
+    client->pcb_ = nullptr;
     printf("tls connection error: %d\n", err);
 }
 
@@ -361,7 +361,7 @@ err_t HttpClient::tls_recv_cb(void* arg, struct altcp_pcb* apcb, struct pbuf* p,
 
 //HTTP
 
-err_t HttpClient::handle_tcp_connected_cb(void *arg, struct tcp_pcb *tpcb, err_t err)
+err_t HttpClient:: handle_tcp_connected_cb(void *arg, struct tcp_pcb *tpcb, err_t err)
 {
     HttpClient* client = static_cast<HttpClient*>(arg);
 

@@ -74,7 +74,6 @@ private:
     HttpHeader request_headers_[MAX_HEADERS];
     size_t request_header_count_;
 
-    bool wifi_initialized_;
     struct altcp_tls_config* tls_config_;
     bool ready_;
     char request_body_[MAX_REQUEST_BODY_LEN];
@@ -97,7 +96,7 @@ private:
     static err_t tls_recv_cb(void* arg, struct altcp_pcb* apcb, struct pbuf* p, err_t err);
     static void handle_altcp_err(void* arg, err_t err);
     static err_t handle_altcp_connect(void* arg,struct altcp_pcb* pcb,err_t err);
-    struct altcp_pcb* pcb_;
+    struct altcp_pcb* pcb_ = nullptr;
 
     void sini(struct altcp_pcb* pcb);
 
@@ -109,7 +108,6 @@ private:
 
     ip_addr_t server_ip_address;
     const char* server_host_name_;
-    bool wifi_status;
 
     bool server_connect_status; //false if dns or any other step fail
 };
